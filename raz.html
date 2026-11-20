@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Калькулятор</title>
+        <style>
+:root {
+    color-scheme: dark;
+
+    --bg-base: #040e09;
+    --glass: rgba(220, 255, 235, 0.08);
+    --glass-border: rgba(220, 255, 235, 0.18);
+    --field: rgba(4, 18, 11, 0.38);
+    --field-border: rgba(220, 255, 235, 0.12);
+    --text: #e9f4ed;
+    --text-dim: #94ad9f;
+    --accent: #25794d;
+    --accent-light: #44ad78;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+    background:
+        radial-gradient(ellipse at 18% 18%, rgba(37, 121, 77, 0.2), transparent 42%),
+        radial-gradient(ellipse at 82% 82%, rgba(32, 101, 93, 0.16), transparent 44%),
+        var(--bg-base);
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    z-index: 0;
+    width: clamp(16rem, 42vw, 32rem);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.28;
+    pointer-events: none;
+    animation: ambient-float 18s ease-in-out infinite alternate;
+}
+
+body::before {
+    top: -18rem;
+    left: -14rem;
+    background: radial-gradient(circle, rgba(53, 190, 112, 0.75), transparent 68%);
+}
+
+body::after {
+    right: -16rem;
+    bottom: -19rem;
+    background: radial-gradient(circle, rgba(43, 153, 145, 0.65), transparent 68%);
+    animation-delay: -9s;
+    animation-direction: alternate-reverse;
+}
+
+@keyframes ambient-float {
+    from { transform: translate3d(0, 0, 0) scale(0.92); }
+    to   { transform: translate3d(4rem, 3rem, 0) scale(1.08); }
+}
+
+#lights {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.glass {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.8  0 0 0 0 1  0 0 0 0 0.88  0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+        linear-gradient(120deg, rgba(255, 255, 255, 0.07), transparent 35%, transparent 65%, rgba(255, 255, 255, 0.04)),
+        rgba(200, 245, 220, 0.07);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 0 90px rgba(0, 0, 0, 0.3);
+}
+
+.brand {
+    position: fixed;
+    top: 18px;
+    left: 24px;
+    z-index: 3;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.72;
+}
+
+.brand-title,
+.brand-sub {
+    font-style: italic;
+    background: linear-gradient(100deg,
+        rgba(233, 244, 237, 0.55) 0%,
+        rgba(68, 173, 120, 0.95) 25%,
+        rgba(150, 255, 200, 0.9) 45%,
+        rgba(90, 235, 215, 0.85) 60%,
+        rgba(190, 255, 120, 0.9) 78%,
+        rgba(233, 244, 237, 0.55) 100%);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shimmer 7s linear infinite;
+}
+
+.brand-title {
+    margin: 0;
+    font-size: clamp(1.25rem, 4vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    filter: drop-shadow(0 0 18px rgba(68, 173, 120, 0.4));
+}
+
+.brand-sub {
+    margin-top: 8px;
+    padding-left: 4px;
+    font-size: clamp(0.85rem, 2.2vw, 1.2rem);
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    animation-duration: 9s;
+    animation-direction: reverse;
+}
+
+@keyframes shimmer {
+    from { background-position: 0% 0; }
+    to   { background-position: 300% 0; }
+}
+
+.main {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 460px;
+    display: grid;
+    grid-template-columns: 1fr 76px 1fr;
+    gap: 12px;
+    padding: 22px;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    backdrop-filter: blur(24px) saturate(140%);
+    border: 1px solid var(--glass-border);
+    border-radius: 26px;
+    box-shadow:
+        0 28px 60px -22px rgba(0, 0, 0, 0.75),
+        0 0 70px rgba(37, 121, 77, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    animation: card-arrive 650ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.main::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(205, 255, 223, 0.65), transparent);
+    pointer-events: none;
+}
+
+@keyframes card-arrive {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .main {
+        background: rgba(16, 36, 26, 0.92);
+    }
+}
+
+.main input,
+.main select,
+.main button {
+    height: 54px;
+    font: inherit;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    border-radius: 14px;
+    transition:
+        transform 0.2s cubic-bezier(0.2, 0.8, 0.3, 1.2),
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.2s ease,
+        filter 0.15s ease;
+}
+
+.main input[type="number"] {
+    min-width: 0;
+    padding: 0 12px;
+    text-align: center;
+    background: var(--field);
+    border: 1px solid var(--field-border);
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.main input[type="number"]::-webkit-outer-spin-button,
+.main input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.main input[type="number"]:hover {
+    border-color: rgba(220, 255, 235, 0.28);
+}
+
+.main select {
+    padding: 0 18px 0 0;
+    text-align: center;
+    text-align-last: center;
+    font-size: 1.5rem;
+    background-color: rgba(220, 255, 235, 0.1);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%2394ad9f' stroke-width='1.6'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.main select:hover {
+    background-color: rgba(220, 255, 235, 0.17);
+}
+
+.main option {
+    background: #14261c;
+    color: var(--text);
+}
+
+.main button {
+    position: relative;
+    overflow: hidden;
+    grid-column: 1 / -1;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(180deg, var(--accent-light), var(--accent));
+    border: 1px solid rgba(220, 255, 235, 0.25);
+    box-shadow:
+        0 10px 24px -10px rgba(42, 133, 86, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+}
+
+.main button::after {
+    content: "";
+    position: absolute;
+    top: -120%;
+    bottom: -120%;
+    left: -35%;
+    width: 24%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    transform: translateX(-160%) rotate(18deg);
+    transition: transform 650ms ease;
+    pointer-events: none;
+}
+
+.main button:hover::after {
+    transform: translateX(570%) rotate(18deg);
+}
+
+.main input[type="number"]:hover,
+.main select:hover {
+    transform: scale(1.06);
+    box-shadow: 0 10px 24px -12px rgba(68, 173, 120, 0.7);
+}
+
+.main button:hover {
+    filter: brightness(1.1);
+    transform: scale(1.03);
+}
+
+.main button:active {
+    transform: scale(0.98);
+}
+
+#result {
+    grid-column: 1 / -1;
+    height: 84px;
+    padding: 0 20px;
+    text-align: right;
+    font-size: 2.4rem;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    background: rgba(3, 14, 9, 0.5);
+    border: 1px solid var(--field-border);
+    border-radius: 18px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#result:focus {
+    border-color: rgba(68, 173, 120, 0.55);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4), 0 0 22px rgba(68, 173, 120, 0.12);
+}
+
+#result:hover {
+    transform: scale(1.02);
+}
+
+#result::placeholder {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.main input:focus-visible,
+.main select:focus-visible,
+.main button:focus-visible {
+    outline: 2px solid var(--accent-light);
+    outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+    .brand {
+        top: 16px;
+        left: 16px;
+    }
+
+    .main {
+        padding: 16px;
+        gap: 10px;
+        grid-template-columns: 1fr 64px 1fr;
+        border-radius: 22px;
+    }
+
+    #result {
+        font-size: 2rem;
+        height: 72px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after,
+    .main {
+        animation: none;
+    }
+
+    .main input,
+    .main select,
+    .main button,
+    #result {
+        transition: none;
+    }
+
+    .main button::after {
+        display: none;
+    }
+
+    .main input[type="number"]:hover,
+    .main select:hover,
+    .main button:hover,
+    #result:hover {
+        transform: none;
+    }
+
+    .brand-title,
+    .brand-sub {
+        animation: none;
+    }
+}
+        </style>
+        <link rel="stylesheet" href="game.css">
+    </head>
+    <body>
+        <header class="brand">
+            <h1 class="brand-title">Burmaldator</h1>
+        </header>
+        <div class="hud">
+            <button class="hud-btn" id="hud-streak" title="Ежедневные награды"><span class="flame">🔥</span><b id="streak-n">0</b><i class="dot"></i></button>
+            <button class="hud-btn" id="hud-skins" title="Скины и кейсы">🎨</button>
+        </div>
+        <div class="hub" id="hub" hidden>
+            <div class="hub-panel" role="dialog" aria-modal="true">
+                <div class="hub-head"><nav id="tabs"></nav><button class="x" id="hub-close" aria-label="Закрыть">✕</button></div>
+                <div id="hub-body"></div>
+            </div>
+        </div>
+        <div class="toast" id="toast"></div>
+        <div class="main">
+            <input type="number" id="1" value=4>
+            <select id="operation">
+                <option>+</option>
+                <option>-</option>
+                <option>*</option>
+                <option>/</option>
+            </select>
+            <input type="number" id="2" value=5>
+            <button id="=">=</button>
+            <input type="number" id="result">
+        </div>
+        <script>
+const input_one = document.getElementById('1')
+const input_two = document.getElementById('2')
+const select_operation = document.getElementById('operation')
+const button_result = document.getElementById('=')
+const input_tree = document.getElementById('result')
+
+
+function calculator(){
+    let num_1 = Number(input_one.value)
+    let num_2 = Number(input_two.value)
+    let operation = select_operation.value
+
+    let res
+    if (operation === "+"){
+        res = num_1 + num_2
+    } else if (operation === '-'){
+        res = num_1 - num_2
+    } else if (operation === "*"){
+        res = num_1 * num_2
+    } else if (operation === "/"){
+        res = num_1 / num_2
+    }
+    input_tree.value = res
+    console.log(res)
+    
+}
+button_result.addEventListener('click', calculator)
+        </script>
+    <script src="game.js"></script>
+    </body>
+</html>
